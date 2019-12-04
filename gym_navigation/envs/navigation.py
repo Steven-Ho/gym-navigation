@@ -30,9 +30,9 @@ class ContinuousNavigation2DEnv(gym.Env):
         self.action_space = Box(low=0., high=1., shape=[self.action_length])
 
         # Overall settings
-        self.max_steps = 1000
+        self.max_steps = 50
         self._max_episode_steps = self.max_steps
-        self.target_range = 30.0
+        self.target_range = 50.0
 
         self.reset()
 
@@ -56,8 +56,8 @@ class ContinuousNavigation2DEnv(gym.Env):
     	info = {}
 
     	if np.linalg.norm(self.agent_pos - self.target_pos) < self.target_range:
-    		reward = 20
-    		done = True
+    		reward = 1
+    		# done = True
 
     	self.steps += 1
     	if self.steps >= self.max_steps:
@@ -72,7 +72,7 @@ class ContinuousNavigation2DEnv(gym.Env):
     		self.agent_pos = np.random.random([2])
     		self.agent_pos *= [self.map_width, self.map_height]
     	else:
-    		self.agent_pos = np.array([50.0, 50.0])
+    		self.agent_pos = np.array([200.0, 150.0])
 
     	if self.random_target_pos:
     		self.target_pos = np.random.random([2])
