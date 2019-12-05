@@ -30,7 +30,7 @@ class ContinuousNavigation2DEnv(gym.Env):
         self.action_space = Box(low=0., high=1., shape=[self.action_length])
 
         # Overall settings
-        self.max_steps = 50
+        self.max_steps = 200
         self._max_episode_steps = self.max_steps
         self.target_range = 50.0
 
@@ -57,7 +57,7 @@ class ContinuousNavigation2DEnv(gym.Env):
 
     	if np.linalg.norm(self.agent_pos - self.target_pos) < self.target_range:
     		reward = 1
-    		# done = True
+    		done = True
 
     	self.steps += 1
     	if self.steps >= self.max_steps:
@@ -105,7 +105,7 @@ class ContinuousNavigation2DEnv(gym.Env):
     			cv2.circle(img, tuple([int(round(x*scale)) for x in tx]), int(round(self.target_range*scale)), (0.7, 0.5, 0.2), -1) # the circle of target
     		else:
     			x2 = states[0:2]
-    			cv2.line(img, tuple([int(round(x*scale)) for x in x1]), tuple([int(round(x*scale)) for x in x2]), (i/float(self.max_steps), 0.3, 0.3), 2*scale)
+    			cv2.line(img, tuple([int(round(x*scale)) for x in x1]), tuple([int(round(x*scale)) for x in x2]), (0.3, i/float(self.max_steps), 0.3), 2*scale)
     			x1 = x2
 
     	if render:
@@ -114,3 +114,32 @@ class ContinuousNavigation2DEnv(gym.Env):
 	    	cv2.destroyAllWindows()
 
     	return img	
+
+class ContinuousNavigation2DNREnv(ContinuousNavigation2DEnv):
+	def __init__(self):
+		super(ContinuousNavigation2DNREnv).__init__()
+
+	def step(self):
+    	old_states = self.states.copy()
+    	v = action[0] * self.speed_scale
+    	theta = action[1] * 2 * pi
+
+    	dx = v * cos(theta) # Zero point is east
+    	dy = v * sin(theta)
+
+    	self.agent_pos = np.array([np.clip(old_states[0] + dx, 0.0, self.map_width), np.clip(old_states[1] + dy, 0.0, self.map_height)])
+    	self.states = np.concatenate((self.agent_pos, self.target_pos))
+    	if self.obs_old_actions_included:
+    		self.states = np.concatenate((self.states, self.agent_old_actions))
+
+    	self.agent_old_actions = action
+
+    	reward = 0
+    	done = False
+    	info = {}
+
+    	self.steps += 1
+    	if self.steps >= self.max_steps:
+    		done = True
+
+    	return self.states, reward, done, info
